@@ -68,7 +68,7 @@ const NSeatsIndicator = styled("span")<{
     `}
   ${(props) =>
     props.selected > 0 &&
-    props.selected == props.target &&
+    props.selected === props.target &&
     css`
       background: #36ca4a;
     `}
@@ -81,7 +81,7 @@ const SeatGrid = () => {
   const nSeats = useAppSelector(selectNSeats);
 
   const handleSubmit = () => {
-    if (selectedSeats.length != nSeats) {
+    if (selectedSeats.length !== nSeats) {
       alert(`Wybierz ${nSeats} miejsca zanim zatwierdzisz wybór.`);
       return;
     }

@@ -67,6 +67,8 @@ const Reservation: React.FC = () => {
     dispatch(fetchSeats());
   };
 
+  console.log(adjacent);
+
   return (
     <Wrapper>
       <Window>
@@ -78,7 +80,7 @@ const Reservation: React.FC = () => {
 
             <Column>
               <Input
-                checked={adjacent}
+                value={nSeats > 0 ? nSeats : ""}
                 onChange={(e) => handleNSeatsChange(e)}
               />
             </Column>
@@ -87,6 +89,7 @@ const Reservation: React.FC = () => {
 
         <div className="field">
           <Checkbox
+            checked={adjacent}
             onChange={(e) => dispatch(toggleAdjacent(e.target.checked))}
           >
             Czy miejsca mają być obok siebie?
