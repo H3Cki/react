@@ -84,7 +84,7 @@ const SeatView = () => {
 
   useEffect(() => {
     dispatch(setSuggestedSeats());
-  }, []);
+  });
 
   return (
     <Wrapper>

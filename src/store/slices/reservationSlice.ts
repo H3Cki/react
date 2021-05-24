@@ -16,16 +16,18 @@ export interface ISeat {
   id: string;
   cords: ICoordinates;
   reserved: boolean;
-  selected: boolean;
+  selected?: boolean;
 }
 
 export interface ReservationState {
   currStep: number;
-  seats: Array<Array<ISeat | null>>;
+  seats: Array<ISeat>;
   adjacent: boolean;
   nSelectedSeats: number;
   maxEmptySeats: number;
   selectedSeats: Array<ISeat>;
+  rows: number;
+  cols: number;
 }
 
 const initialState: ReservationState = {
@@ -34,6 +36,8 @@ const initialState: ReservationState = {
   adjacent: false,
   nSelectedSeats: 0,
   maxEmptySeats: 0,
+  rows: 0,
+  cols: 0,
   selectedSeats: [],
 };
 
@@ -47,49 +51,26 @@ export const reservationSlice = createSlice({
   initialState,
   reducers: {
     setSuggestedSeats(state) {
-      reservationSlice.caseReducers.deselectAllSeats(state);
-
-      if (state.nSelectedSeats > state.maxEmptySeats) {
-        alert(
-          `Wybrano ${state.nSelectedSeats} miejsc, na tej sali wolnych miejsc jest ${state.maxEmptySeats}.`
-        );
-        return;
-      }
-
-      state.selectedSeats = [];
-      let seatsToToggle: Array<ICoordinates> = new Array<ICoordinates>();
-
-      //iterate over seats
-      for (const row of state.seats) {
-        for (const seat of row) {
-          if (state.adjacent) {
-            if (seat === null || seat.reserved)
-              seatsToToggle = new Array<ICoordinates>();
-          }
-          if (seat !== null && !seat.reserved) {
-            seatsToToggle.push(seat.cords);
-          }
-
-          if (seatsToToggle.length === state.nSelectedSeats) {
-            reservationSlice.caseReducers.toggleSeats(state, {
-              type: "setSuggestedSeatsToggle",
-              payload: seatsToToggle,
-            });
-            return;
-          }
-        }
-
-        //reset seatsToToggle before new row if adjacent is true
-        if (state.adjacent) {
-          seatsToToggle = new Array<ICoordinates>();
-        }
-      }
-
-      alert(
-        `Nie udało się wybrać ${state.nSelectedSeats} ${
-          state.adjacent ? "sąsiadujących " : ""
-        }miejsc.`
-      );
+      // reservationSlice.caseReducers.deselectAllSeats(state);
+      // if (state.nSelectedSeats > state.maxEmptySeats) {
+      //   alert(
+      //     `Wybrano ${state.nSelectedSeats} miejsc, na tej sali wolnych miejsc jest ${state.maxEmptySeats}.`
+      //   );
+      //   return;
+      // }
+      // state.selectedSeats = [];
+      // let seatsToToggle: Array<ISeat> = [];
+      // if (state.seats.length == 0) return;
+      // //iterate over seats
+      // let prevX = state.seats[0].cords.x;
+      // let prevY = state.seats[0].cords.y;
+      // for (const seat of state.seats) {
+      // }
+      // alert(
+      //   `Nie udało się wybrać ${state.nSelectedSeats} ${
+      //     state.adjacent ? "sąsiadujących " : ""
+      //   }miejsc.`
+      // );
     },
     nextStep(state) {
       state.currStep += 1;
@@ -112,32 +93,28 @@ export const reservationSlice = createSlice({
       }
       state.selectedSeats = [];
     },
-    toggleSeats: (state, action: PayloadAction<Array<ICoordinates>>) => {
-      for (const cords of action.payload) {
-        //get seat at specified coordinates
-        const seatAtCords = state.seats[cords.x][cords.y];
-
-        if (seatAtCords === null) return;
-
+    toggleSeats: (state, action: PayloadAction<Array<ISeat>>) => {
+      for (const seat of action.payload) {
         //add or remove seats from selected
 
-        if (seatAtCords.reserved) {
+        if (seat.reserved) {
           alert("Miejsce jest już zarezerwowane.");
           return;
         }
 
-        if (seatAtCords.selected) {
+        if (seat.selected) {
           state.selectedSeats = state.selectedSeats.filter(
-            (seat) => seat.id !== seatAtCords.id
+            (seat) => seat.id !== seat.id
           );
-          seatAtCords.selected = false;
+          seat.selected = false;
         } else {
           if (state.selectedSeats.length >= state.nSelectedSeats) {
             alert("Limit miejsc osiągnięty.");
             return;
           }
-          state.selectedSeats.push(seatAtCords);
-          seatAtCords.selected = true;
+          state.selectedSeats.push(seat);
+
+          seat.selected = true;
         }
       }
     },
@@ -147,34 +124,23 @@ export const reservationSlice = createSlice({
 
     builder.addCase(fetchSeats.fulfilled, (state, action) => {
       const seats = action.payload;
+      const extendedSeats = [];
       let maxSeats = 0;
-      const seats2D = new Array();
+      let rows = 0;
+      let cols = 0;
 
       //iterate over seats
       for (const seat of seats) {
-        //fill a gap in rows with an array to make sure that seat.cords.x is within seats2D length.
-        if (seat.cords.x >= seats2D.length) {
-          for (let i = 0; i < 1 + seat.cords.x - seats2D.length; i++)
-            seats2D.push(new Array());
-        }
-
-        const row = seats2D[seat.cords.x];
-
-        //fill a gap in columns with nulls to make sure that seat.cords.y is within row length.
-        if (seat.cords.y >= row.length) {
-          for (let i = 0; i < 1 + seat.cords.y - row.length; i++)
-            // row.concat(new Array(seat.cords.y - row.length).fill(null)) // test and refactor
-            row.push(null);
-        }
-
-        //set seat at given coordinates
-        row[seat.cords.y] = { ...seat, selected: false };
+        if (seat.cords.x >= rows) rows = seat.cords.x + 1;
+        if (seat.cords.y >= cols) cols = seat.cords.y + 1;
         if (!seat.reserved) maxSeats += 1;
+        extendedSeats.push({ ...seat, selected: false });
       }
 
       state.maxEmptySeats = maxSeats;
-
-      state.seats = seats2D;
+      state.rows = rows;
+      state.cols = cols;
+      state.seats = extendedSeats;
 
       //advance to next step
       reservationSlice.caseReducers.nextStep(state);
@@ -210,5 +176,7 @@ export const selectActualNSeats = (state: RootState) =>
     : state.reservation.maxEmptySeats;
 export const allSeatsSelected = (state: RootState) =>
   state.reservation.selectedSeats.length === selectActualNSeats(state);
+export const selectRows = (state: RootState) => state.reservation.rows;
+export const selectCols = (state: RootState) => state.reservation.cols;
 
 export default reservationSlice.reducer;
