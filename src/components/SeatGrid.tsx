@@ -16,6 +16,7 @@ const SeatGrid = () => {
 
   return (
     <table
+      onDragStart={(e) => e.preventDefault()}
       onMouseDown={() => setHoverSelect(true)}
       onMouseUp={() => setHoverSelect(false)}
       onMouseLeave={() => setHoverSelect(false)}

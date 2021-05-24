@@ -14,6 +14,7 @@ const StyledSeat = styled("div")<{ seat: ISeat | ISeatExample | null }>`
   border-radius: 1px;
   box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 1);
   transition: background 0.25s ease;
+  pointer-events: all;
   ${(props) => {
     if (props.seat) {
       if (props.seat.reserved) {
@@ -30,6 +31,7 @@ const StyledSeat = styled("div")<{ seat: ISeat | ISeatExample | null }>`
       return css`
         background: transparent;
         box-shadow: none;
+        pointer-events: none;
       `;
     }
   }};
