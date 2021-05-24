@@ -4,7 +4,8 @@ import { ISeat, ISeatExample } from "../store/slices/reservationSlice";
 
 interface Props {
   seat: ISeat | ISeatExample | null;
-  onClick?: () => void;
+  onMouseDown?: () => void;
+  onHover?: () => void;
 }
 
 const StyledSeat = styled("div")<{ seat: ISeat | ISeatExample | null }>`
@@ -34,12 +35,15 @@ const StyledSeat = styled("div")<{ seat: ISeat | ISeatExample | null }>`
   }};
 `;
 
-const Seat = ({ seat, onClick } : Props) => {
+const Seat = ({ seat, onMouseDown, onHover }: Props) => {
   return (
     <StyledSeat
       seat={seat}
-      onClick={() => {
-        if (onClick) onClick();
+      onMouseEnter={() => {
+        if (onHover) onHover();
+      }}
+      onMouseDown={() => {
+        if (onMouseDown) onMouseDown();
       }}
     />
   );

@@ -183,5 +183,6 @@ export const selectSeats = (state: RootState) => state.reservation.seats;
 export const selectSelectedSeats = (state: RootState) =>
   state.reservation.selectedSeats;
 export const selectCurrStep = (state: RootState) => state.reservation.currStep;
+export const allSeatsSelected = (state: RootState) => state.reservation.selectedSeats.length === state.reservation.nSelectedSeats;
 
 export default reservationSlice.reducer;
