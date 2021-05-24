@@ -51,9 +51,11 @@ export const reservationSlice = createSlice({
       //iterate over seats
       for (const row of state.seats) {
         for (const seat of row) {
-          if (seat === null || (seat.reserved && state.adjacent))
-            seatsToToggle = new Array<ICoordinates>();
-          else {
+          if (state.adjacent) {
+            if (seat === null || seat.reserved)
+              seatsToToggle = new Array<ICoordinates>();
+          }
+          if (seat !== null && !seat.reserved) {
             seatsToToggle.push(seat.cords);
           }
 
@@ -66,6 +68,7 @@ export const reservationSlice = createSlice({
           }
         }
 
+        //reset seatsToToggle before new row if adjacent is true
         if (state.adjacent) {
           seatsToToggle = new Array<ICoordinates>();
         }
@@ -161,7 +164,6 @@ export const reservationSlice = createSlice({
     });
   },
 });
-
 
 /// Exports
 
