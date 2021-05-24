@@ -11,6 +11,7 @@ import {
   selectSelectedSeats,
   setSuggestedSeats,
   selectSeats,
+  selectActualNSeats,
 } from "../store/slices/reservationSlice";
 import SeatDescription from "./SeatDescription";
 
@@ -74,7 +75,7 @@ const NSeatsIndicator = styled("span")<{
 const SeatView = () => {
   const dispatch = useAppDispatch();
   const selectedSeats = useAppSelector(selectSelectedSeats);
-  const nSeats = useAppSelector(selectNSeats);
+  const nSeats = useAppSelector(selectActualNSeats);
 
   const handleSubmit = () => {
     if (selectedSeats.length !== nSeats) {

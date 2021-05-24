@@ -20,7 +20,6 @@ const Window = styled.div`
   background: white;
   padding: 20px;
   width: 600px;
-
   .field:not(:first-child) {
     margin-top: 20px;
   }

@@ -24,6 +24,7 @@ export interface ReservationState {
   seats: Array<Array<ISeat | null>>;
   adjacent: boolean;
   nSelectedSeats: number;
+  maxEmptySeats: number;
   selectedSeats: Array<ISeat>;
 }
 
@@ -32,6 +33,7 @@ const initialState: ReservationState = {
   seats: [],
   adjacent: false,
   nSelectedSeats: 0,
+  maxEmptySeats: 0,
   selectedSeats: [],
 };
 
@@ -45,6 +47,15 @@ export const reservationSlice = createSlice({
   initialState,
   reducers: {
     setSuggestedSeats(state) {
+      reservationSlice.caseReducers.deselectAllSeats(state);
+
+      if (state.nSelectedSeats > state.maxEmptySeats) {
+        alert(
+          `Wybrano ${state.nSelectedSeats} miejsc, na tej sali wolnych miejsc jest ${state.maxEmptySeats}.`
+        );
+        return;
+      }
+
       state.selectedSeats = [];
       let seatsToToggle: Array<ICoordinates> = new Array<ICoordinates>();
 
@@ -95,6 +106,12 @@ export const reservationSlice = createSlice({
         ? (state.adjacent = action.payload)
         : (state.adjacent = !state.adjacent);
     },
+    deselectAllSeats(state) {
+      for (const seat of state.selectedSeats) {
+        seat.selected = false;
+      }
+      state.selectedSeats = [];
+    },
     toggleSeats: (state, action: PayloadAction<Array<ICoordinates>>) => {
       for (const cords of action.payload) {
         //get seat at specified coordinates
@@ -130,6 +147,7 @@ export const reservationSlice = createSlice({
 
     builder.addCase(fetchSeats.fulfilled, (state, action) => {
       const seats = action.payload;
+      let maxSeats = 0;
       const seats2D = new Array();
 
       //iterate over seats
@@ -151,7 +169,10 @@ export const reservationSlice = createSlice({
 
         //set seat at given coordinates
         row[seat.cords.y] = { ...seat, selected: false };
+        if (!seat.reserved) maxSeats += 1;
       }
+
+      state.maxEmptySeats = maxSeats;
 
       state.seats = seats2D;
 
@@ -183,6 +204,11 @@ export const selectSeats = (state: RootState) => state.reservation.seats;
 export const selectSelectedSeats = (state: RootState) =>
   state.reservation.selectedSeats;
 export const selectCurrStep = (state: RootState) => state.reservation.currStep;
-export const allSeatsSelected = (state: RootState) => state.reservation.selectedSeats.length === state.reservation.nSelectedSeats;
+export const selectActualNSeats = (state: RootState) =>
+  state.reservation.nSelectedSeats <= state.reservation.maxEmptySeats
+    ? state.reservation.nSelectedSeats
+    : state.reservation.maxEmptySeats;
+export const allSeatsSelected = (state: RootState) =>
+  state.reservation.selectedSeats.length === selectActualNSeats(state);
 
 export default reservationSlice.reducer;
