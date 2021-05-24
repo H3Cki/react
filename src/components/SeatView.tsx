@@ -6,11 +6,8 @@ import SeatGrid from "./SeatGrid";
 import {
   prevStep,
   nextStep,
-  toggleSeats,
-  selectNSeats,
   selectSelectedSeats,
   setSuggestedSeats,
-  selectSeats,
   selectActualNSeats,
 } from "../store/slices/reservationSlice";
 import SeatDescription from "./SeatDescription";
@@ -58,15 +55,15 @@ const NSeatsIndicator = styled("span")<{
   background: gray;
   color: white;
   font-weight: bold;
-  ${(props) =>
-    props.selected > 0 &&
-    props.selected < props.target &&
+  ${({selected, target}) =>
+    selected > 0 &&
+    selected < target &&
     css`
       background: orange;
     `}
-  ${(props) =>
-    props.selected > 0 &&
-    props.selected === props.target &&
+  ${({selected, target}) =>
+    selected > 0 &&
+    selected === target &&
     css`
       background: #36ca4a;
     `}
@@ -113,7 +110,7 @@ const SeatView = () => {
           >{`${selectedSeats.length}/${nSeats}`}</NSeatsIndicator>
         </Info>
 
-        <Button type="primary" onClick={() => handleSubmit()}>
+        <Button type="primary" onClick={handleSubmit}>
           Zatwierdź miejsca
         </Button>
       </ControlPanelWrapper>

@@ -12,6 +12,7 @@ const SeatGrid = () => {
   const dispatch = useAppDispatch();
   const seats = useAppSelector(selectSeats);
   const allSeats = useAppSelector(allSeatsSelected);
+  
   if (!seats.length) return <div>No seats found!</div>;
 
   return (
