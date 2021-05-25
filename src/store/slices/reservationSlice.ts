@@ -1,4 +1,9 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSlice,
+  current,
+  PayloadAction,
+} from "@reduxjs/toolkit";
 import { RootState } from "../index";
 
 export interface ICoordinates {
@@ -12,16 +17,19 @@ export interface ISeatExample {
   selected: boolean;
 }
 
-export interface ISeat {
+export interface IBareSeat {
   id: string;
   cords: ICoordinates;
   reserved: boolean;
+}
+
+export interface ISeat extends IBareSeat {
   selected: boolean;
 }
 
 export interface ReservationState {
   currStep: number;
-  seats: Array<Array<ISeat | null>>;
+  seats: Array<ISeat>;
   adjacent: boolean;
   nSelectedSeats: number;
   maxEmptySeats: number;
@@ -48,7 +56,6 @@ export const reservationSlice = createSlice({
   reducers: {
     setSuggestedSeats(state) {
       reservationSlice.caseReducers.deselectAllSeats(state);
-
       if (state.nSelectedSeats > state.maxEmptySeats) {
         alert(
           `Wybrano ${state.nSelectedSeats} miejsc, na tej sali wolnych miejsc jest ${state.maxEmptySeats}.`
@@ -56,32 +63,39 @@ export const reservationSlice = createSlice({
         return;
       }
 
-      state.selectedSeats = [];
-      let seatsToToggle: Array<ICoordinates> = new Array<ICoordinates>();
+      let seatsToToggle: String[] = [];
+      let prev = null;
 
-      //iterate over seats
-      for (const row of state.seats) {
-        for (const seat of row) {
-          if (state.adjacent) {
-            if (seat === null || seat.reserved)
-              seatsToToggle = new Array<ICoordinates>();
-          }
-          if (seat !== null && !seat.reserved) {
-            seatsToToggle.push(seat.cords);
-          }
-
-          if (seatsToToggle.length === state.nSelectedSeats) {
-            reservationSlice.caseReducers.toggleSeats(state, {
-              type: "setSuggestedSeatsToggle",
-              payload: seatsToToggle,
-            });
-            return;
+      for (const seat of state.seats) {
+        console.log("xx");
+        console.log(prev ? current(prev.cords) : null);
+        console.log(current(seat.cords));
+        console.log("--");
+        if (prev && state.adjacent) {
+          if (
+            prev.cords.y != seat.cords.y - 1 ||
+            prev.cords.x != seat.cords.x ||
+            seat.reserved
+          ) {
+            console.log("BREAK");
+            seatsToToggle = [];
           }
         }
 
-        //reset seatsToToggle before new row if adjacent is true
-        if (state.adjacent) {
-          seatsToToggle = new Array<ICoordinates>();
+        if (!seat.reserved) {
+          console.log("Adding", current(seat.cords));
+          seatsToToggle.push(seat.id);
+        }
+
+        prev = seat;
+        console.log(`${seatsToToggle.length} == ${state.nSelectedSeats}`);
+        if (seatsToToggle.length == state.nSelectedSeats) {
+          reservationSlice.caseReducers.toggleSeats(state, {
+            type: "suggested/toggle",
+            payload: seatsToToggle,
+          });
+          console.log("Suggesting seats");
+          return;
         }
       }
 
@@ -112,32 +126,33 @@ export const reservationSlice = createSlice({
       }
       state.selectedSeats = [];
     },
-    toggleSeats: (state, action: PayloadAction<Array<ICoordinates>>) => {
-      for (const cords of action.payload) {
-        //get seat at specified coordinates
-        const seatAtCords = state.seats[cords.x][cords.y];
+    toggleSeats: (state, action: PayloadAction<Array<String>>) => {
+      const seatIds = action.payload;
 
-        if (seatAtCords === null) return;
+      const seatsToToggle = state.seats.filter((seat) =>
+        seatIds.includes(seat.id)
+      );
 
+      for (const seat of seatsToToggle) {
         //add or remove seats from selected
 
-        if (seatAtCords.reserved) {
+        if (seat.reserved) {
           alert("Miejsce jest już zarezerwowane.");
           return;
         }
 
-        if (seatAtCords.selected) {
+        if (seat.selected) {
           state.selectedSeats = state.selectedSeats.filter(
-            (seat) => seat.id !== seatAtCords.id
+            (_seat) => _seat.id !== seat.id
           );
-          seatAtCords.selected = false;
+          seat.selected = false;
         } else {
           if (state.selectedSeats.length >= state.nSelectedSeats) {
             alert("Limit miejsc osiągnięty.");
             return;
           }
-          state.selectedSeats.push(seatAtCords);
-          seatAtCords.selected = true;
+          state.selectedSeats.push(seat);
+          seat.selected = true;
         }
       }
     },
@@ -146,35 +161,11 @@ export const reservationSlice = createSlice({
     builder.addCase(fetchSeats.pending, () => {});
 
     builder.addCase(fetchSeats.fulfilled, (state, action) => {
-      const seats = action.payload;
-      let maxSeats = 0;
-      const seats2D = new Array();
-
-      //iterate over seats
-      for (const seat of seats) {
-        //fill a gap in rows with an array to make sure that seat.cords.x is within seats2D length.
-        if (seat.cords.x >= seats2D.length) {
-          for (let i = 0; i < 1 + seat.cords.x - seats2D.length; i++)
-            seats2D.push(new Array());
-        }
-
-        const row = seats2D[seat.cords.x];
-
-        //fill a gap in columns with nulls to make sure that seat.cords.y is within row length.
-        if (seat.cords.y >= row.length) {
-          for (let i = 0; i < 1 + seat.cords.y - row.length; i++)
-            // row.concat(new Array(seat.cords.y - row.length).fill(null)) // test and refactor
-            row.push(null);
-        }
-
-        //set seat at given coordinates
-        row[seat.cords.y] = { ...seat, selected: false };
-        if (!seat.reserved) maxSeats += 1;
-      }
-
-      state.maxEmptySeats = maxSeats;
-
-      state.seats = seats2D;
+      state.maxEmptySeats = 0;
+      state.seats = action.payload.map((seat: IBareSeat) => {
+        if (!seat.reserved) state.maxEmptySeats += 1;
+        return { ...seat, selected: false };
+      });
 
       //advance to next step
       reservationSlice.caseReducers.nextStep(state);
