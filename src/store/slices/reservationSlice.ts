@@ -1,9 +1,4 @@
-import {
-  createAsyncThunk,
-  createSlice,
-  current,
-  PayloadAction,
-} from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../index";
 
 export interface ICoordinates {
@@ -67,34 +62,25 @@ export const reservationSlice = createSlice({
       let prev = null;
 
       for (const seat of state.seats) {
-        console.log("xx");
-        console.log(prev ? current(prev.cords) : null);
-        console.log(current(seat.cords));
-        console.log("--");
         if (prev && state.adjacent) {
           if (
-            prev.cords.y != seat.cords.y - 1 ||
-            prev.cords.x != seat.cords.x ||
+            prev.cords.y !== seat.cords.y - 1 ||
+            prev.cords.x !== seat.cords.x ||
             seat.reserved
           ) {
-            console.log("BREAK");
             seatsToToggle = [];
           }
         }
 
-        if (!seat.reserved) {
-          console.log("Adding", current(seat.cords));
-          seatsToToggle.push(seat.id);
-        }
+        if (!seat.reserved) seatsToToggle.push(seat.id);
 
         prev = seat;
-        console.log(`${seatsToToggle.length} == ${state.nSelectedSeats}`);
-        if (seatsToToggle.length == state.nSelectedSeats) {
+
+        if (seatsToToggle.length === state.nSelectedSeats) {
           reservationSlice.caseReducers.toggleSeats(state, {
             type: "suggested/toggle",
             payload: seatsToToggle,
           });
-          console.log("Suggesting seats");
           return;
         }
       }

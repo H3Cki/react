@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import {
   toggleSeats,
   selectSeats,
   allSeatsSelected,
+  ISeat,
 } from "../store/slices/reservationSlice";
 import Seat from "./Seat";
 
@@ -24,27 +25,28 @@ const SeatSlot = styled("div")<{ x: number; y: number }>`
   grid-row: ${({ x }) => x};
 `;
 
+function calculateGridDim(seats: ISeat[]) {
+  let _rows = 0;
+  let _cols = 0;
+
+  for (const seat of seats) {
+    if (seat.cords.x > _rows) _rows = seat.cords.x;
+    if (seat.cords.y > _cols) _cols = seat.cords.y;
+  }
+
+  return {
+    rows: _rows,
+    cols: _cols,
+  };
+}
+
 const SeatGrid = () => {
-  const [rows, setRows] = useState<number>(0);
-  const [cols, setCols] = useState<number>(0);
   const [hoverSelect, setHoverSelect] = useState(false);
   const dispatch = useAppDispatch();
   const seats = useAppSelector(selectSeats);
   const allSeats = useAppSelector(allSeatsSelected);
 
-  useEffect(() => {
-    console.log("Calculating rows and cols");
-    let _rows = 0;
-    let _cols = 0;
-
-    for (const seat of seats) {
-      if (seat.cords.x > _rows) _rows = seat.cords.x;
-      if (seat.cords.y > _cols) _cols = seat.cords.y;
-    }
-
-    setRows(_rows + 1);
-    setCols(_cols + 1);
-  });
+  const dimensions = useMemo(() => calculateGridDim(seats), [seats]);
 
   if (!seats.length) return <div>No seats found!</div>;
 
@@ -55,10 +57,14 @@ const SeatGrid = () => {
       onMouseUp={() => setHoverSelect(false)}
       onMouseLeave={() => setHoverSelect(false)}
     >
-      <Grid nRows={rows} nCols={cols} gap={10}>
+      <Grid nRows={dimensions.rows} nCols={dimensions.cols} gap={10}>
         {seats.map((seat, i) => {
           return (
-            <SeatSlot key={i} x={seat.cords.x + 1} y={seat.cords.y + 1}>
+            <SeatSlot
+              key={"slot" + i}
+              x={seat.cords.x + 1}
+              y={seat.cords.y + 1}
+            >
               <Seat
                 key={i}
                 seat={seat}

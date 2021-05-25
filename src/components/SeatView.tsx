@@ -55,13 +55,13 @@ const NSeatsIndicator = styled("span")<{
   background: gray;
   color: white;
   font-weight: bold;
-  ${({selected, target}) =>
+  ${({ selected, target }) =>
     selected > 0 &&
     selected < target &&
     css`
       background: orange;
     `}
-  ${({selected, target}) =>
+  ${({ selected, target }) =>
     selected > 0 &&
     selected === target &&
     css`
@@ -84,7 +84,7 @@ const SeatView = () => {
 
   useEffect(() => {
     dispatch(setSuggestedSeats());
-  }, []);
+  }, [dispatch]);
 
   return (
     <Wrapper>
