@@ -13,7 +13,10 @@ const StyledSeat = styled("div")<{ seat: ISeat | ISeatExample }>`
   height: 100%;
   border-radius: 1px;
   box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 1);
+  background-color: white;
   transition: background 0.25s ease;
+  pointer-events: all;
+
   ${({ seat }) => {
     if (seat.reserved) {
       return css`

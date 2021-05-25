@@ -12,11 +12,15 @@ export interface ISeatExample {
   selected: boolean;
 }
 
-export interface ISeat {
+export interface IBareSeat {
   id: string;
   cords: ICoordinates;
   reserved: boolean;
-  selected?: boolean;
+
+}
+
+export interface ISeat extends IBareSeat {
+  selected: boolean;
 }
 
 export interface ReservationState {
@@ -51,26 +55,48 @@ export const reservationSlice = createSlice({
   initialState,
   reducers: {
     setSuggestedSeats(state) {
-      // reservationSlice.caseReducers.deselectAllSeats(state);
-      // if (state.nSelectedSeats > state.maxEmptySeats) {
-      //   alert(
-      //     `Wybrano ${state.nSelectedSeats} miejsc, na tej sali wolnych miejsc jest ${state.maxEmptySeats}.`
-      //   );
-      //   return;
-      // }
-      // state.selectedSeats = [];
-      // let seatsToToggle: Array<ISeat> = [];
-      // if (state.seats.length == 0) return;
-      // //iterate over seats
-      // let prevX = state.seats[0].cords.x;
-      // let prevY = state.seats[0].cords.y;
-      // for (const seat of state.seats) {
-      // }
-      // alert(
-      //   `Nie udało się wybrać ${state.nSelectedSeats} ${
-      //     state.adjacent ? "sąsiadujących " : ""
-      //   }miejsc.`
-      // );
+
+      reservationSlice.caseReducers.deselectAllSeats(state);
+      if (state.nSelectedSeats > state.maxEmptySeats) {
+        alert(
+          `Wybrano ${state.nSelectedSeats} miejsc, na tej sali wolnych miejsc jest ${state.maxEmptySeats}.`
+        );
+        return;
+      }
+
+      let seatsToToggle: String[] = [];
+      let prev = null;
+
+      for (const seat of state.seats) {
+        if (prev && state.adjacent) {
+          if (
+            prev.cords.y !== seat.cords.y - 1 ||
+            prev.cords.x !== seat.cords.x ||
+            seat.reserved
+          ) {
+            seatsToToggle = [];
+          }
+        }
+
+        if (!seat.reserved) seatsToToggle.push(seat.id);
+
+        prev = seat;
+
+        if (seatsToToggle.length === state.nSelectedSeats) {
+          reservationSlice.caseReducers.toggleSeats(state, {
+            type: "suggested/toggle",
+            payload: seatsToToggle,
+          });
+          return;
+        }
+      }
+
+      alert(
+        `Nie udało się wybrać ${state.nSelectedSeats} ${
+          state.adjacent ? "sąsiadujących " : ""
+        }miejsc.`
+      );
+
     },
     nextStep(state) {
       state.currStep += 1;
@@ -93,8 +119,16 @@ export const reservationSlice = createSlice({
       }
       state.selectedSeats = [];
     },
-    toggleSeats: (state, action: PayloadAction<Array<ISeat>>) => {
-      for (const seat of action.payload) {
+
+    toggleSeats: (state, action: PayloadAction<Array<String>>) => {
+      const seatIds = action.payload;
+
+      const seatsToToggle = state.seats.filter((seat) =>
+        seatIds.includes(seat.id)
+      );
+
+      for (const seat of seatsToToggle) {
+
         //add or remove seats from selected
 
         if (seat.reserved) {
@@ -104,7 +138,9 @@ export const reservationSlice = createSlice({
 
         if (seat.selected) {
           state.selectedSeats = state.selectedSeats.filter(
-            (seat) => seat.id !== seat.id
+
+            (_seat) => _seat.id !== seat.id
+
           );
           seat.selected = false;
         } else {
@@ -123,24 +159,13 @@ export const reservationSlice = createSlice({
     builder.addCase(fetchSeats.pending, () => {});
 
     builder.addCase(fetchSeats.fulfilled, (state, action) => {
-      const seats = action.payload;
-      const extendedSeats = [];
-      let maxSeats = 0;
-      let rows = 0;
-      let cols = 0;
 
-      //iterate over seats
-      for (const seat of seats) {
-        if (seat.cords.x >= rows) rows = seat.cords.x + 1;
-        if (seat.cords.y >= cols) cols = seat.cords.y + 1;
-        if (!seat.reserved) maxSeats += 1;
-        extendedSeats.push({ ...seat, selected: false });
-      }
+      state.maxEmptySeats = 0;
+      state.seats = action.payload.map((seat: IBareSeat) => {
+        if (!seat.reserved) state.maxEmptySeats += 1;
+        return { ...seat, selected: false };
+      });
 
-      state.maxEmptySeats = maxSeats;
-      state.rows = rows;
-      state.cols = cols;
-      state.seats = extendedSeats;
 
       //advance to next step
       reservationSlice.caseReducers.nextStep(state);
