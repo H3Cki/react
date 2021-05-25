@@ -16,7 +16,6 @@ export interface IBareSeat {
   id: string;
   cords: ICoordinates;
   reserved: boolean;
-
 }
 
 export interface ISeat extends IBareSeat {
@@ -45,8 +44,10 @@ const initialState: ReservationState = {
   selectedSeats: [],
 };
 
+const apiUrl = "https://react-seats.herokuapp.com/seats";
+
 export const fetchSeats = createAsyncThunk("users/fetchSeats", async () => {
-  const response = await fetch("http://localhost:3001/seats");
+  const response = await fetch(apiUrl);
   return response.json();
 });
 
@@ -55,7 +56,6 @@ export const reservationSlice = createSlice({
   initialState,
   reducers: {
     setSuggestedSeats(state) {
-
       reservationSlice.caseReducers.deselectAllSeats(state);
       if (state.nSelectedSeats > state.maxEmptySeats) {
         alert(
@@ -96,7 +96,6 @@ export const reservationSlice = createSlice({
           state.adjacent ? "sąsiadujących " : ""
         }miejsc.`
       );
-
     },
     nextStep(state) {
       state.currStep += 1;
@@ -128,7 +127,6 @@ export const reservationSlice = createSlice({
       );
 
       for (const seat of seatsToToggle) {
-
         //add or remove seats from selected
 
         if (seat.reserved) {
@@ -138,9 +136,7 @@ export const reservationSlice = createSlice({
 
         if (seat.selected) {
           state.selectedSeats = state.selectedSeats.filter(
-
             (_seat) => _seat.id !== seat.id
-
           );
           seat.selected = false;
         } else {
@@ -159,13 +155,11 @@ export const reservationSlice = createSlice({
     builder.addCase(fetchSeats.pending, () => {});
 
     builder.addCase(fetchSeats.fulfilled, (state, action) => {
-
       state.maxEmptySeats = 0;
       state.seats = action.payload.map((seat: IBareSeat) => {
         if (!seat.reserved) state.maxEmptySeats += 1;
         return { ...seat, selected: false };
       });
-
 
       //advance to next step
       reservationSlice.caseReducers.nextStep(state);
