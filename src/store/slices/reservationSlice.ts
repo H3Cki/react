@@ -16,6 +16,7 @@ export interface IBareSeat {
   id: string;
   cords: ICoordinates;
   reserved: boolean;
+
 }
 
 export interface ISeat extends IBareSeat {
@@ -29,6 +30,8 @@ export interface ReservationState {
   nSelectedSeats: number;
   maxEmptySeats: number;
   selectedSeats: Array<ISeat>;
+  rows: number;
+  cols: number;
 }
 
 const initialState: ReservationState = {
@@ -37,6 +40,8 @@ const initialState: ReservationState = {
   adjacent: false,
   nSelectedSeats: 0,
   maxEmptySeats: 0,
+  rows: 0,
+  cols: 0,
   selectedSeats: [],
 };
 
@@ -50,6 +55,7 @@ export const reservationSlice = createSlice({
   initialState,
   reducers: {
     setSuggestedSeats(state) {
+
       reservationSlice.caseReducers.deselectAllSeats(state);
       if (state.nSelectedSeats > state.maxEmptySeats) {
         alert(
@@ -90,6 +96,7 @@ export const reservationSlice = createSlice({
           state.adjacent ? "sąsiadujących " : ""
         }miejsc.`
       );
+
     },
     nextStep(state) {
       state.currStep += 1;
@@ -112,6 +119,7 @@ export const reservationSlice = createSlice({
       }
       state.selectedSeats = [];
     },
+
     toggleSeats: (state, action: PayloadAction<Array<String>>) => {
       const seatIds = action.payload;
 
@@ -120,6 +128,7 @@ export const reservationSlice = createSlice({
       );
 
       for (const seat of seatsToToggle) {
+
         //add or remove seats from selected
 
         if (seat.reserved) {
@@ -129,7 +138,9 @@ export const reservationSlice = createSlice({
 
         if (seat.selected) {
           state.selectedSeats = state.selectedSeats.filter(
+
             (_seat) => _seat.id !== seat.id
+
           );
           seat.selected = false;
         } else {
@@ -138,6 +149,7 @@ export const reservationSlice = createSlice({
             return;
           }
           state.selectedSeats.push(seat);
+
           seat.selected = true;
         }
       }
@@ -147,11 +159,13 @@ export const reservationSlice = createSlice({
     builder.addCase(fetchSeats.pending, () => {});
 
     builder.addCase(fetchSeats.fulfilled, (state, action) => {
+
       state.maxEmptySeats = 0;
       state.seats = action.payload.map((seat: IBareSeat) => {
         if (!seat.reserved) state.maxEmptySeats += 1;
         return { ...seat, selected: false };
       });
+
 
       //advance to next step
       reservationSlice.caseReducers.nextStep(state);
@@ -187,5 +201,7 @@ export const selectActualNSeats = (state: RootState) =>
     : state.reservation.maxEmptySeats;
 export const allSeatsSelected = (state: RootState) =>
   state.reservation.selectedSeats.length === selectActualNSeats(state);
+export const selectRows = (state: RootState) => state.reservation.rows;
+export const selectCols = (state: RootState) => state.reservation.cols;
 
 export default reservationSlice.reducer;

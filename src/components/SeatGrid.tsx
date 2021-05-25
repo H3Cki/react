@@ -1,4 +1,6 @@
+
 import React, { useMemo, useState } from "react";
+
 import { useAppDispatch, useAppSelector } from "../hooks";
 import {
   toggleSeats,
@@ -14,9 +16,11 @@ const Grid = styled("div")<{ nRows: number; nCols: number; gap: number }>`
   display: grid;
   grid-template-columns: ${({ nCols }) => `repeat(${nCols}, 1fr)`};
   grid-template-rows: ${({ nRows }) => `repeat(${nRows}, 1fr)`};
+
   grid-column-gap: ${({ gap }) => `${gap}px`};
   grid-row-gap: ${({ gap }) => `${gap}px`};
 `;
+
 
 const SeatSlot = styled("div")<{ x: number; y: number }>`
   width: 50px;
@@ -88,6 +92,7 @@ const SeatGrid = () => {
 
   const dimensions = useMemo(() => calculateGridDim(seats), [seats]);
 
+
   if (!seats.length) return <div>No seats found!</div>;
 
   return (
@@ -97,6 +102,7 @@ const SeatGrid = () => {
       onMouseUp={() => setHoverSelect(false)}
       onMouseLeave={() => setHoverSelect(false)}
     >
+
       <TutorialWrapper>
         <TutorialIcon id="tutorial-icon"> ? </TutorialIcon>
         <Tutorial id="tutorial">{tutorialText}</Tutorial>
@@ -109,11 +115,13 @@ const SeatGrid = () => {
               x={seat.cords.x + 1}
               y={seat.cords.y + 1}
             >
+
               <Seat
                 key={i}
                 seat={seat}
                 onHover={() => {
                   if (hoverSelect && !seat.reserved && !allSeats)
+
                     dispatch(toggleSeats([seat.id]));
                 }}
                 onMouseDown={() => {
@@ -121,6 +129,7 @@ const SeatGrid = () => {
                 }}
               />
             </SeatSlot>
+
           );
         })}
       </Grid>

@@ -16,6 +16,7 @@ const StyledSeat = styled("div")<{ seat: ISeat | ISeatExample }>`
   background-color: white;
   transition: background 0.25s ease;
   pointer-events: all;
+
   ${({ seat }) => {
     if (seat.reserved) {
       return css`
@@ -27,7 +28,7 @@ const StyledSeat = styled("div")<{ seat: ISeat | ISeatExample }>`
         box-shadow: 0px 0px 0px 1px orange;
       `;
     }
-  }};
+  }}
 `;
 
 const Seat = ({ seat, onMouseDown, onHover }: Props) => {
